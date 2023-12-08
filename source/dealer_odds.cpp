@@ -712,6 +712,12 @@ int main(int argc, char* argv[])
 
     double sum_sum_sum(0.0);
 
+#if 0
+    bool isPrintCards = true;
+#else
+    bool isPrintCards = false;
+#endif
+
     for (int i = 9; i >= 0; --i)
     {
         cout << "Dealer Up Card: " << i + 1 << endl;
@@ -734,22 +740,25 @@ int main(int argc, char* argv[])
         }
         std::cout << std::endl;
 
-		cout << std::setw(8) << "Stand #";
-        for (int c = 1; c <= 10; ++c)
+        if (isPrintCards)
         {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
-        for (int j = 0; j < 10; ++j)
-        {
-            std::cout << std::setw(8) << j + 1;
-            for (int k = 0; k <= j; ++k)
+            cout << std::setw(8) << "Stand #";
+            for (int c = 1; c <= 10; ++c)
             {
-                std::cout << std::setw(8) << e.mStand[i][j][k].mCards;
+                std::cout << std::setw(8) << c;
+            }
+            cout << endl;
+            for (int j = 0; j < 10; ++j)
+            {
+                std::cout << std::setw(8) << j + 1;
+                for (int k = 0; k <= j; ++k)
+                {
+                    std::cout << std::setw(8) << e.mStand[i][j][k].mCards;
+                }
+                std::cout << std::endl;
             }
             std::cout << std::endl;
         }
-        std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
         cout << std::setw(8) << "Double";
         for (int c = 1; c <= 10; ++c)
@@ -768,22 +777,25 @@ int main(int argc, char* argv[])
         }
         std::cout << std::endl;
 
-		cout << std::setw(8) << "Double #";
-        for (int c = 1; c <= 10; ++c)
+        if (isPrintCards)
         {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
-        for (int j = 0; j < 10; ++j)
-        {
-            std::cout << std::setw(8) << j + 1;
-            for (int k = 0; k <= j; ++k)
+            cout << std::setw(8) << "Double #";
+            for (int c = 1; c <= 10; ++c)
             {
-                std::cout << std::setw(8) << e.mDouble[i][j][k].mCards;
+                std::cout << std::setw(8) << c;
+            }
+            cout << endl;
+            for (int j = 0; j < 10; ++j)
+            {
+                std::cout << std::setw(8) << j + 1;
+                for (int k = 0; k <= j; ++k)
+                {
+                    std::cout << std::setw(8) << e.mDouble[i][j][k].mCards;
+                }
+                std::cout << std::endl;
             }
             std::cout << std::endl;
         }
-        std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
         cout << std::setw(8) << "Hit";
         for (int c = 1; c <= 10; ++c)
@@ -802,22 +814,25 @@ int main(int argc, char* argv[])
         }
         std::cout << std::endl;
 
-		cout << std::setw(8) << "Hit #";
-        for (int c = 1; c <= 10; ++c)
+        if (isPrintCards)
         {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
-        for (int j = 0; j < 10; ++j)
-        {
-            std::cout << std::setw(8) << j + 1;
-            for (int k = 0; k <= j; ++k)
+            cout << std::setw(8) << "Hit #";
+            for (int c = 1; c <= 10; ++c)
             {
-                std::cout << std::setw(8) << e.mHit[i][j][k].mCards;
+                std::cout << std::setw(8) << c;
+            }
+            cout << endl;
+            for (int j = 0; j < 10; ++j)
+            {
+                std::cout << std::setw(8) << j + 1;
+                for (int k = 0; k <= j; ++k)
+                {
+                    std::cout << std::setw(8) << e.mHit[i][j][k].mCards;
+                }
+                std::cout << std::endl;
             }
             std::cout << std::endl;
         }
-        std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
         cout << std::setw(8) << "Split";
         for (int c = 1; c <= 10; ++c)
@@ -825,15 +840,28 @@ int main(int argc, char* argv[])
             std::cout << std::setw(8) << c;
         }
         cout << endl;
-        for (int j = 0; j < 10; ++j)
+
+        if (true)
         {
-            std::cout << std::setw(8) << j + 1;
-            for (int k = 0; k < j; ++k)
+            std::cout << std::setw(8) << " ";
+            for (int j = 0; j < 10; ++j)
             {
-                std::cout << std::setw(8) << " ";
+                std::cout << std::setw(8) << e.mSplit[i][j];
             }
-            std::cout << std::setw(8) << e.mSplit[i][j];
             std::cout << std::endl;
+        }
+        else
+        {
+            for (int j = 0; j < 10; ++j)
+            {
+                std::cout << std::setw(8) << j + 1;
+                for (int k = 0; k < j; ++k)
+                {
+                    std::cout << std::setw(8) << " ";
+                }
+                std::cout << std::setw(8) << e.mSplit[i][j];
+                std::cout << std::endl;
+            }
         }
         std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
