@@ -6,87 +6,61 @@
 #include "Wlt.h"
 #include "Divide.h"
 
-const double gBjPayout(1.5);
-const bool gHitSoft17(false);
-const bool gSurrender(true);
-const bool gIgnoreDealerBj(true);
-const int gMaxSplit(4);
+const auto gBjPayout = double(3.0 / 2.0); // (6.0 / 5.0);
+const auto gHitSoft17 = bool(false);
+const auto gSurrender = bool(true);
+const auto gIgnoreDealerBj = bool(true);
+const auto gMaxSplit = int(4);
 
-const bool gStrategy(false);
+const auto gStrategy = bool(false);
 
-std::vector<double> zero1(10, 0);
-std::vector<std::vector<double> > zero2(10, zero1);
+using std::vector;
 
-std::vector<double> sur1(10, gSurrender ? -0.5 : -1.0);
-std::vector<std::vector<double> > sur2(10, sur1);
+auto zero1D = vector<double>(10, 0);
+auto zero2D = vector<vector<double>>(10, zero1D);
 
-std::vector<Bj::Wlt> tmp1(10);
-std::vector<std::vector<Bj::Wlt> > tmp2(10, tmp1);
+auto loss1D = vector<double>(10, -1.0);
 
-//std::vector<std::vector<Bj::Wlt> > gSplit(10, tmp1);
+auto sur1D = vector<double>(10, gSurrender ? -0.5 : -1.0);
+auto sur2D = vector<vector<double>>(10, sur1D);
+
+auto wlt1D = vector<Bj::Wlt>(10);
+auto wlt2D = vector<vector<Bj::Wlt>>(10, wlt1D);
+
+//vector<vector<Bj::Wlt> > gSplit(10, tmp1);
+
+auto unk1D = vector<char>(10, '?');
+auto unk2D = vector<vector<char>>(10, unk1D);
 
 class Expect
 {
 public:
 
-    std::vector<std::vector<std::vector<double> > > mOdds;
-    std::vector<std::vector<std::vector<double> > > mBest;
-    std::vector<std::vector<std::vector<Bj::Wlt> > > mDouble;
-    std::vector<std::vector<std::vector<Bj::Wlt> > > mStand;
-    std::vector<std::vector<std::vector<Bj::Wlt> > > mHit;
-    std::vector<std::vector<double> > mSplit;
+    vector<vector<vector<double>>> mOdds;
+    vector<vector<vector<double>>> mBest;
+    vector<vector<vector<Bj::Wlt>>> mDouble;
+    vector<vector<vector<Bj::Wlt>>> mStand;
+    vector<vector<vector<Bj::Wlt>>> mHit;
+    vector<vector<double>> mSplit;
+    vector<vector<vector<char>>> mChoice;
 
-    void Odds(int s[11], int rem);
-    void Stand(int s[11], int rem);
-    void Double(int s[11], int rem);
-    Bj::Wlt Hit(const Bj::Wlt& stand, int p[11], int s[11], int rem, int d1, int p1, int p2, double ratio);
-    void Hit(int s[11], int rem);
-    void Split(int s[11], int rem);
-    double Split(int s[11], int rem, int d, int p);
+    double mExp;
 
-    Expect()
-    : mOdds(10, zero2)
-    , mBest(10, sur2)
-    , mDouble(10, tmp2)
-    , mStand(10, tmp2)
-    , mHit(10, tmp2)
-    , mSplit(10, sur1)
+    Expect(int s[11], int rem)
+        : mOdds(10, zero2D)
+        , mBest(10, sur2D)
+        , mDouble(10, wlt2D)
+        , mStand(10, wlt2D)
+        , mHit(10, wlt2D)
+        , mSplit(10, loss1D)
+        , mChoice(10, unk2D)
+        , mExp(0.0)
     {
-    }
+        Play(s, rem);
 
-    double Deck(int s[11], int rem)
-    {
-        Odds(s, rem);
-        Stand(s, rem);
-        Double(s, rem);
-        Hit(s, rem);
-        Split(s, rem);
+        Choose();
 
-        for (int i = 0; i < 10; ++i)
-        {
-            for (int j = 0; j < 10; ++j)
-            {
-                for (int k = 0; k <= j; ++k)
-                {
-                    mBest[i][k][j] = std::max(mStand[i][k][j].exp(), 
-                                              std::max(mHit[i][k][j].exp(), mDouble[i][k][j].exp()));
-
-                    // can only figure surrender when ignoring dealer natural
-                    if (gSurrender && gIgnoreDealerBj)
-                    {
-                        mBest[i][k][j] = std::max(mBest[i][k][j], -0.5);
-                    }
-
-                    if (j == k)
-                    {
-                        mBest[i][k][j] = std::max(mBest[i][k][j], mSplit[i][j]);
-                    }
-                }
-            }
-        }
-
-        double odds(0.0);
-        double exp(0.0);
+        auto odds = double(0.0);
         for (int i = 9; i >= 0; --i)
         {
             for (int j = 0; j < 10; ++j)
@@ -94,12 +68,90 @@ public:
                 for (int k = 0; k <= j; ++k)
                 {
                     odds += mOdds[i][k][j];
-                    exp += mOdds[i][k][j] * mBest[i][k][j];
+                    mExp += mOdds[i][k][j] * mBest[i][k][j];
                 }
             }
         }
-        return odds;
+
+        if (odds != 1.0 and (abs(odds - 1.0) > 0.000001))
+        {
+            std::cerr << "Deck odds did not sum to 1.0.  (" << odds << ")";
+        }
     }
+
+private:
+    void Odds(int s[11], int rem);
+
+    void Stand(int s[11], int rem);
+    
+    void Double(int s[11], int rem);
+    
+    Bj::Wlt Hit(const Bj::Wlt& stand, int p[11], int s[11], int rem, int d1, int p1, int p2, double ratio);
+    
+    void Hit(int s[11], int rem);
+    
+    void Split(int s[11], int rem);
+    
+    double Split(int s[11], int rem, int d, int p);
+
+    // Calculate individual cases for each hand
+    void Play(int s[11], int rem)
+    {
+        Odds(s, rem);
+        Stand(s, rem);
+        Double(s, rem);
+        Hit(s, rem);
+        Split(s, rem);
+    }
+
+    void Choose()
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            for (int j = 0; j < 10; ++j)
+            {
+                for (int k = 0; k <= j; ++k)
+                {
+                    mBest[i][k][j] = mStand[i][k][j].exp();
+                    mChoice[i][k][j] = 'S';
+
+                    const auto hit = mHit[i][k][j].exp();
+                    if (hit > mBest[i][k][j])
+                    {
+                        mBest[i][k][j] = hit;
+                        mChoice[i][k][j] = 'H';
+                    }
+
+                    /// when Hit and Double are essentially the same odds, and positive, then should choose Double with a small tolerance to avoid spurious Hit instead of Double
+                    const auto dbl = mDouble[i][k][j].exp();
+                    if ((dbl >= 0.0) and ((dbl > mBest[i][k][j]) or (abs(dbl - mBest[i][k][j]) < 0.001)))
+                    {
+                        mBest[i][k][j] = dbl;
+                        mChoice[i][k][j] = '2';
+                    }
+
+                    // can only figure surrender when ignoring dealer natural
+                    /// \todo why?
+                    if (gSurrender && gIgnoreDealerBj)
+                    {
+                        mBest[i][k][j] = std::max(mBest[i][k][j], -0.5);
+                        mChoice[i][k][j] = 'U';
+                    }
+
+                    // only consider split when have same rank cards
+                    if (j == k)
+                    {
+                        mBest[i][k][j] = std::max(mBest[i][k][j], mSplit[i][j]);
+                        mChoice[i][k][j] = '|';
+                    }
+                }
+            }
+        }
+    }
+
+public:
+
+    void Print() const;
 };
 
 void Expect::Odds(int s[11], int rem)
@@ -694,25 +746,24 @@ void Expect::Split(int s[11], int rem)
     }
 }
 
-int main(int argc, char* argv[])
+void ColHeader(const std::string aType)
 {
-    const int d = 1;
-    const int r = 4;
+    cout << std::setw(8) << aType;
+    for (int c = 1; c <= 10; ++c)
+    {
+        std::cout << std::setw(8) << c;
+    }
+    cout << endl;
+}
 
-    int s[11] = { 0, d*r, d*r, d*r, d*r, d*r, d*r, d*r, d*r, d*r, 4*d*r};
-    int rem = d*r*13;
-
-    Bj::InitialDivide();
-
-    Expect e;
-    double odds = e.Deck(s,rem);
-
+void Expect::Print() const
+{
 	// output
 
 	std::cout.precision(4);
 	std::cout.setf(std::ios::fixed);
 
-    cout << endl << odds << endl;
+    cout << endl << mExp << endl;
 
 	cout << endl << "+++" << endl;
 
@@ -729,18 +780,13 @@ int main(int argc, char* argv[])
         cout << "Dealer Up Card: " << i + 1 << endl;
         std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
-        cout << std::setw(8) << "Stand";
-        for (int c = 1; c <= 10; ++c)
-        {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
+        ColHeader("Stand");
         for (int j = 0; j < 10; ++j)
         {
             std::cout << std::setw(8) << j + 1;
             for (int k = 0; k <= j; ++k)
             {
-                std::cout << std::setw(8) << e.mStand[i][k][j].exp();
+                std::cout << std::setw(8) << mStand[i][k][j].exp();
             }
             std::cout << std::endl;
         }
@@ -748,36 +794,26 @@ int main(int argc, char* argv[])
 
         if (isPrintCards)
         {
-            cout << std::setw(8) << "Stand #";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
+            ColHeader("Stand #");
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    std::cout << std::setw(8) << e.mStand[i][k][j].mCards;
+                    std::cout << std::setw(8) << mStand[i][k][j].mCards;
                 }
                 std::cout << std::endl;
             }
             std::cout << std::endl;
         }
 /////////////////////////////////////////////////////////////////////////////
-        cout << std::setw(8) << "Hit";
-        for (int c = 1; c <= 10; ++c)
-        {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
+        ColHeader("Hit");
         for (int j = 0; j < 10; ++j)
         {
             std::cout << std::setw(8) << j + 1;
             for (int k = 0; k <= j; ++k)
             {
-                std::cout << std::setw(8) << e.mHit[i][k][j].exp();
+                std::cout << std::setw(8) << mHit[i][k][j].exp();
             }
             std::cout << std::endl;
         }
@@ -785,36 +821,26 @@ int main(int argc, char* argv[])
 
         if (isPrintCards)
         {
-            cout << std::setw(8) << "Hit #";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
+            ColHeader("Hit #");
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    std::cout << std::setw(8) << e.mHit[i][k][j].mCards;
+                    std::cout << std::setw(8) << mHit[i][k][j].mCards;
                 }
                 std::cout << std::endl;
             }
             std::cout << std::endl;
         }
  /////////////////////////////////////////////////////////////////////////////
-        cout << std::setw(8) << "Double";
-        for (int c = 1; c <= 10; ++c)
-        {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
+        ColHeader("Double");
         for (int j = 0; j < 10; ++j)
         {
             std::cout << std::setw(8) << j + 1;
             for (int k = 0; k <= j; ++k)
             {
-                std::cout << std::setw(8) << e.mDouble[i][k][j].exp();
+                std::cout << std::setw(8) << mDouble[i][k][j].exp();
             }
             std::cout << std::endl;
         }
@@ -822,37 +848,27 @@ int main(int argc, char* argv[])
 
         if (isPrintCards)
         {
-            cout << std::setw(8) << "Double #";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
+            ColHeader("Double #");
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    std::cout << std::setw(8) << e.mDouble[i][k][j].mCards;
+                    std::cout << std::setw(8) << mDouble[i][k][j].mCards;
                 }
                 std::cout << std::endl;
             }
             std::cout << std::endl;
         }
  /////////////////////////////////////////////////////////////////////////////
-        cout << std::setw(8) << "Split";
-        for (int c = 1; c <= 10; ++c)
-        {
-            std::cout << std::setw(8) << c;
-        }
-        cout << endl;
+        ColHeader("Split");
 
         if (true)
         {
             std::cout << std::setw(8) << " ";
             for (int j = 0; j < 10; ++j)
             {
-                std::cout << std::setw(8) << e.mSplit[i][j];
+                std::cout << std::setw(8) << mSplit[i][j];
             }
             std::cout << std::endl;
         }
@@ -865,25 +881,20 @@ int main(int argc, char* argv[])
                 {
                     std::cout << std::setw(8) << " ";
                 }
-                std::cout << std::setw(8) << e.mSplit[i][j];
+                std::cout << std::setw(8) << mSplit[i][j];
                 std::cout << std::endl;
             }
         }
         std::cout << std::endl;
 /////////////////////////////////////////////////////////////////////////////
         {
-            cout << std::setw(8) << "Best";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
+            ColHeader("Best");
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    std::cout << std::setw(8) << e.mBest[i][k][j];
+                    std::cout << std::setw(8) << mBest[i][k][j];
                 }
                 std::cout << std::endl;
             }
@@ -891,20 +902,15 @@ int main(int argc, char* argv[])
         }
 /////////////////////////////////////////////////////////////////////////////
         {
-            cout << std::setw(8) << "Odds";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
-            std::vector<double> sum(10, 0.0);
+            ColHeader("Odds");
+            vector<double> sum(10, 0.0);
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    sum[k] += e.mOdds[i][k][j];
-                    std::cout << std::setw(8) << e.mOdds[i][k][j];
+                    sum[k] += mOdds[i][k][j];
+                    std::cout << std::setw(8) << mOdds[i][k][j];
                 }
                 std::cout << std::endl;
             }
@@ -920,20 +926,15 @@ int main(int argc, char* argv[])
         }
 /////////////////////////////////////////////////////////////////////////////
         {
-            cout << std::setw(8) << "Exp";
-            for (int c = 1; c <= 10; ++c)
-            {
-                std::cout << std::setw(8) << c;
-            }
-            cout << endl;
-            std::vector<double> sum(10, 0.0);
+            ColHeader("Exp");
+            vector<double> sum(10, 0.0);
             for (int j = 0; j < 10; ++j)
             {
                 std::cout << std::setw(8) << j + 1;
                 for (int k = 0; k <= j; ++k)
                 {
-                    sum[k] += e.mOdds[i][k][j] * e.mBest[i][k][j];
-                    std::cout << std::setw(8) << e.mOdds[i][k][j] * e.mBest[i][k][j];
+                    sum[k] += mOdds[i][k][j] * mBest[i][k][j];
+                    std::cout << std::setw(8) << mOdds[i][k][j] * mBest[i][k][j];
                 }
                 std::cout << std::endl;
             }
@@ -953,6 +954,22 @@ int main(int argc, char* argv[])
         cout << "---" << endl;
     }
     std::cout << std::setw(8) << sum_sum_sum << std::endl;
+
+}
+
+int main(int argc, char* argv[])
+{
+    const int d = 1;
+    const int r = 4;
+
+    int s[11] = { 0, d * r, d * r, d * r, d * r, d * r, d * r, d * r, d * r, d * r, 4 * d * r };
+    int rem = d * r * 13;
+
+    Bj::InitialDivide();
+
+    const auto e = Expect(s, rem);
+
+    e.Print();
 
     return 0;
 }
