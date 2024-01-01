@@ -17,7 +17,7 @@ namespace Bj
 
         void Print();
 
-        Wlt WinLoss(const int ace, const int two, const int thr, const int fou, const int fiv, const int six, const int sev, const int eig, const int nin, const int ten, const bool aNatural, const bool aIgnoreDealerBj);
+        Wlt WinLoss(const int ace, const int two, const int thr, const int fou, const int fiv, const int six, const int sev, const int eig, const int nin, const int ten, const bool aNatural, const double aBjPayout);
 
         // DealerOdds Odds(const int deck);
 

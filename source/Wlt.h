@@ -23,7 +23,7 @@ namespace Bj
                      const bool aNatural, 
 					 const unsigned aSum,
 					 const double aCards,
-                     const bool aIgnoreDealerBj);
+                     const double aBjPayoff);
 
         double mCheck;
         double mWin;

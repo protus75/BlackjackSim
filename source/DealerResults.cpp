@@ -103,14 +103,14 @@ void Bj::DealerResults::Results(const int d1, const int d2, const int car,
 }
 Bj::Wlt Bj::DealerResults::WinLoss(const int ace, const int two, const int thr, const int fou, const int fiv, 
 								   const int six, const int sev, const int eig, const int nin, const int ten, 
-								   const bool aNatural, const bool aIgnoreDealerBj)
+								   const bool aNatural, const double aBjPayout)
 {
     const int cards(ace + two + thr + fou + fiv + six + sev + eig + nin + ten);
     int sum(ace + (2 * two) + (3 * thr) + (4 * fou) + (5 * fiv) + (6 * six) + (7 * sev) + (8 * eig) + (9 * nin) + (10 * ten));
     if (ace && (sum <= 11))
         sum += 10;
 
-    return Wlt(mOdds, aNatural, sum, cards, aIgnoreDealerBj);
+    return Wlt(mOdds, aNatural, sum, cards, aBjPayout);
 }
 void Bj::DealerResults::DS12(const int d1, const int d2, const int car, const int ds, 
 							 const int ace, const int two, const int thr, const int fou, const int fiv, 

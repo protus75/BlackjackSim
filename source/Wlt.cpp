@@ -55,7 +55,7 @@ void Bj::Wlt::check() const
         cout << "Win  " << mWin << endl;
         cout << "Loss " << mLoss << endl;
         cout << "Tie  " << mTie << endl;
-        exit(1);
+        throw;
     }
 }
 
@@ -90,27 +90,25 @@ double Bj::Wlt::exp() const
 }
 
 
-Bj::Wlt::Wlt(const DealerOdds& aOdds, 
+Bj::Wlt::Wlt(const DealerOdds& aDealer, 
              const bool aNatural, 
 			 const unsigned aPlayerSum,
 			 const double aCards,
-             const bool aIgnoreDealerBj)
-: mCheck(aOdds.mCheck)
+             const double aBjPayoff)
+: mCheck(aDealer.mCheck)
 , mWin(0.0)
 , mTie(0.0)
 , mLoss(0.0)
-, mCards(aCards * mCheck + aOdds.mCards)
+, mCards(aCards * mCheck + aDealer.mCards)
 {
-    const double ign(aIgnoreDealerBj ? aOdds.mNatural : 0.0);
-
     if (aPlayerSum > 21)
     {
-        mLoss = mCheck - ign;
+        mLoss = mCheck;
     }
     else if (aPlayerSum < 17)
     {
-        mWin = aOdds.mBust;
-        mLoss = aOdds.m17 + aOdds.m18 + aOdds.m19 + aOdds.m20 + aOdds.m21 - ign;
+        mWin = aDealer.mBust;
+        mLoss = aDealer.m17 + aDealer.m18 + aDealer.m19 + aDealer.m20 + aDealer.m21;
     }
     else
     {
@@ -118,30 +116,30 @@ Bj::Wlt::Wlt(const DealerOdds& aOdds,
         {
         case 17: 
             {
-                mWin = aOdds.mBust;
-                mTie = aOdds.m17;
-                mLoss = aOdds.m18 + aOdds.m19 + aOdds.m20 + aOdds.m21 - ign;
+                mWin = aDealer.mBust;
+                mTie = aDealer.m17;
+                mLoss = aDealer.m18 + aDealer.m19 + aDealer.m20 + aDealer.m21;
                 break;
             }
         case 18: 
             {
-                mWin = aOdds.m17 + aOdds.mBust;
-                mTie = aOdds.m18;
-                mLoss = aOdds.m19 + aOdds.m20 + aOdds.m21 - ign;
+                mWin = aDealer.m17 + aDealer.mBust;
+                mTie = aDealer.m18;
+                mLoss = aDealer.m19 + aDealer.m20 + aDealer.m21;
                 break;
             }
         case 19: 
             {
-                mWin = aOdds.m17 + aOdds.m18 + aOdds.mBust;
-                mTie = aOdds.m19;
-                mLoss = aOdds.m20 + aOdds.m21 - ign;
+                mWin = aDealer.m17 + aDealer.m18 + aDealer.mBust;
+                mTie = aDealer.m19;
+                mLoss = aDealer.m20 + aDealer.m21;
                 break;
             }
         case 20: 
             {
-                mWin = aOdds.m17 + aOdds.m18 + aOdds.m19 + aOdds.mBust;
-                mTie = aOdds.m20;
-                mLoss = aOdds.m21 - ign;
+                mWin = aDealer.m17 + aDealer.m18 + aDealer.m19 + aDealer.mBust;
+                mTie = aDealer.m20;
+                mLoss = aDealer.m21;
                 break;
             }
         case 21: 
@@ -149,34 +147,24 @@ Bj::Wlt::Wlt(const DealerOdds& aOdds,
                 if (aNatural)
                 {
                     // player wins automatically with Bj
-                    mWin = aOdds.m17 + aOdds.m18 + aOdds.m19 + aOdds.m20 + aOdds.m21 - aOdds.mNatural + aOdds.mBust;
-                    mTie = aOdds.mNatural - ign;
+                    mWin = aDealer.m17 + aDealer.m18 + aDealer.m19 + aDealer.m20 + aDealer.m21 - aDealer.mNatural + aDealer.mBust;
+                    mTie = aDealer.mNatural;
                 }
                 else
                 {
-                    mWin = aOdds.m17 + aOdds.m18 + aOdds.m19 + aOdds.m20 + aOdds.mBust;
-                    mTie = aOdds.m21 - aOdds.mNatural;
-                    mLoss = aOdds.mNatural - ign;
+                    mWin = aDealer.m17 + aDealer.m18 + aDealer.m19 + aDealer.m20 + aDealer.mBust;
+                    mTie = aDealer.m21 - aDealer.mNatural;
+                    mLoss = aDealer.mNatural;
                 }
                 break;
             }
         }
     }
 
-    if (aIgnoreDealerBj) 
-    {
-        if (!IsClose(mCheck, ign))
-        {
-            const double tmp(mCheck);
-            mCheck -= ign;
-            scale(tmp / (tmp - ign));
-        }
-        else
-        {
-            scale(0.0);
-        }
-
-    }
-
     check();
+
+    if (aNatural)
+    {
+        mWin *= aBjPayoff;
+    }
 }
