@@ -313,7 +313,7 @@ void Expect::Double(int s[11], int rem)
 
                             Bj::DealerResults dr(gHitSoft17);
                             dr.Results(d1, d2, rem, s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], 1.0, p1 + p2 + p3);
-                            dbl += dr.WinLoss(p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], natural, gBjPayout).scale(p3Odds * d2Odds);
+                            dbl += (dr.WinLoss(p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], natural, gBjPayout).scale(p3Odds * d2Odds) * 2.0);
 
                             ++s[p3]; ++rem;
                         }
